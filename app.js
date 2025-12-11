@@ -112,14 +112,21 @@ phina.define('GameScene', {
 
         // 石を置く関数
         function putStone(x, y) {
-            const stone = Sprite("stone").addChildTo(fieldLayer).setPosition(fieldLayer.gridX.span(x), fieldLayer.gridY.span(y));
-            cells[y][x] = 1;
+            // const stone = Sprite("stone").addChildTo(fieldLayer).setPosition(fieldLayer.gridX.span(x), fieldLayer.gridY.span(y));
+            const stone = Sprite("stone").addChildTo(fieldLayer).setPosition(holdStonesBox.position.x - fieldLayer.position.x, holdStonesBox.position.y - fieldLayer.position.y);
+            stone.tweener.to({x: fieldLayer.gridX.span(x), y: fieldLayer.gridY.span(y)}, 200)
+            .call(() => {
+                cells[y][x] = 1;
+            })
+            .play();
             stone.setInteractive(true);
             stone.on("pointstart", () => {
-                stone.remove();
-                holdStonesCount++;
-                holdStonesLabel.text = String(holdStonesCount);
-                putGrass(x, y);
+                stone.tweener.to({x: holdStonesBox.position.x - fieldLayer.position.x, y: holdStonesBox.position.y - fieldLayer.position.y}, 200).call(() => {
+                    stone.remove();
+                    holdStonesCount++;
+                    holdStonesLabel.text = String(holdStonesCount);
+                    putGrass(x, y);
+                }).play();
             });
         }
 
