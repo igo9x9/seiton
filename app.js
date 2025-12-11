@@ -50,7 +50,7 @@ phina.define('HowToScene', {
 
         LabelArea({
             width: this.width - 100,
-            text: "草地をブロックで区切って、長方形に整頓するゲームです。\n\nただし、長方形の面積は、10の倍数にしなければなりません。\n\n下の画像の3のように、少しだけ余るのはOKです。",
+            text: "草地をブロックで区切って、長方形に整えるゲームです。\n\nただし、長方形の面積は、10の倍数にする必要があります。\n\n例外として、下の画像の3のように、少しだけ余ったものがあるのはOKです。",
             fontSize: 30,
             fill: "black",
         }).addChildTo(this).setPosition(this.gridX.center(), this.gridY.center(-3));
@@ -127,6 +127,8 @@ phina.define('GameScene', {
         judgeButton.on("pointstart", function() {
             const ret = checkClearCondition();
             if (ret) {
+                judgeButton.hide();
+                stopButton.hide();
                 App.pushScene(ClearScene1());
                 self.one("resume", () => {
                     newGame();
@@ -134,10 +136,24 @@ phina.define('GameScene', {
             }
         });
 
+        // 中止ボタン
+        const stopButton = BasicButton({
+            text: "やめる",
+            width: 100,
+            height: 50,
+            primary: false,
+        }).addChildTo(self).setPosition(self.gridX.center(6), self.gridY.span(15));
+        stopButton.setInteractive(true);
+        stopButton.on("pointstart", function() {
+            App.replaceScene(TitleScene());
+        });
+
         let cells = [];
 
         function newGame() {
             let holdStonesCount = 0;
+            judgeButton.show();
+            stopButton.show();
             createProblem();
             drawField();
         }
@@ -374,7 +390,7 @@ phina.define('GameScene', {
 
             // セルの数が10の倍数でないグループが複数ある場合はクリア失敗
             if (nonMultipleOfTenGroups.length > 1) {
-                App.pushScene(FailedScene1({text: "長方形はできたかな？\n長方形の面積は１０の倍数にしてね！"}));
+                App.pushScene(FailedScene1({text: "長方形の面積は１０の倍数にしてね！"}));
                 return false;
             }
 
@@ -452,6 +468,21 @@ phina.define('GameScene', {
                 if (Math.random() < 0.5) {
                     cells[y][9] = 2;
                 }
+            }
+
+            // まれに左辺に切り込みを入れる
+            if (Math.random() < 0.1) {
+                cells[8][0] = 0;
+                cells[8][1] = 0;
+                cells[8][2] = 0;
+                cells[8][3] = 0;
+            }
+
+            // まれに右辺に切り込みを入れる
+            if (Math.random() < 0.1) {
+                cells[8][9] = 0;
+                cells[8][8] = 0;
+                cells[8][7] = 0;
             }
 
             // 水に隣接している草地を石に変換
@@ -560,14 +591,9 @@ phina.define('ClearScene1', {
         this.superInit(param);
         const self = this;
 
-        RectangleShape({
-            width: this.width,
-            height: this.height,
-            fill: "rgba(255, 255, 255, 0.7)",
-            strokeWidth: 0,
-        }).addChildTo(this).setPosition(this.gridX.center(), this.gridY.center());
+        self.backgroundColor = "rgba(255, 255, 255, 0.7)";
 
-        LabelArea({
+        const label = LabelArea({
             width: this.width - 50,
             text: "CLEAR!!",
             fontSize: 120,
@@ -578,11 +604,29 @@ phina.define('ClearScene1', {
             align: "center",
         }).addChildTo(this).setPosition(this.gridX.center(), this.gridY.center(-1));
 
-        Sprite("panda").addChildTo(this).setPosition(this.gridX.center(), this.gridY.center());
+        const panda = Sprite("panda").addChildTo(this).setPosition(this.gridX.center(), this.gridY.center());
 
         this.on("pointstart", () => {
-            self.exit();
+            nextStage();
         });
+
+        function nextStage() {
+            self.backgroundColor = "transparent";
+            label.remove();
+            panda.remove();
+
+            // 次の問題
+            const nextStageButton = BasicButton({
+                text: "次の問題へ",
+                width: 220,
+                height: 50,
+                primary: true,
+            }).addChildTo(self).setPosition(self.gridX.center(), self.gridY.span(15));
+            nextStageButton.setInteractive(true);
+            nextStageButton.on("pointstart", function() {
+                self.exit();
+            });
+        }
 
     },
 });
