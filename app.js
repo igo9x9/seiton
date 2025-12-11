@@ -1,5 +1,68 @@
 phina.globalize();
 
+const version = "1.0";
+
+phina.define('TitleScene', {
+    superClass: 'DisplayScene',
+    init: function(param/*{}*/) {
+        this.superInit(param);
+
+        const self = this;
+
+        this.backgroundColor = "PeachPuff";
+
+        Label({
+            text: "せいとん\nパズル",
+            fontSize: 100,
+            fill: "black",
+            fontWeight: 800,
+        }).addChildTo(this).setPosition(this.gridX.center(), this.gridY.center(-2.5));
+
+        Label({
+            text: "version " + version,
+            fontSize: 20,
+            fill: "black",
+        }).addChildTo(this).setPosition(this.gridX.center(), this.gridY.center());
+
+        Sprite("panda").addChildTo(this).setPosition(this.gridX.center(), this.gridY.center(2));
+
+        this.on("pointstart", () => {
+            self.exit("HowToScene");
+        });
+    },
+});
+
+phina.define('HowToScene', {
+    superClass: 'DisplayScene',
+    init: function(param/*{}*/) {
+        this.superInit(param);
+
+        const self = this;
+
+        this.backgroundColor = "PeachPuff";
+
+        Label({
+            text: "遊び方",
+            fontSize: 50,
+            fill: "black",
+            fontWeight: 800,
+        }).addChildTo(this).setPosition(this.gridX.center(), this.gridY.center(-7));
+
+        LabelArea({
+            width: this.width - 100,
+            text: "草地をブロックで区切って、長方形に整頓するゲームです。\n\nただし、長方形の面積は、10の倍数にしなければなりません。\n\n下の画像の3のように、少しだけ余るのはOKです。",
+            fontSize: 30,
+            fill: "black",
+        }).addChildTo(this).setPosition(this.gridX.center(), this.gridY.center(-3));
+        
+        Sprite("howto").addChildTo(this).setPosition(this.gridX.center(), this.gridY.center(3.5));
+
+        this.on("pointstart", () => {
+            self.exit("GameScene");
+        });
+    },
+});
+
 phina.define('GameScene', {
     superClass: 'DisplayScene',
     init: function(param) {
@@ -62,34 +125,22 @@ phina.define('GameScene', {
         }).addChildTo(self).setPosition(self.gridX.center(), self.gridY.span(15));
         judgeButton.setInteractive(true);
         judgeButton.on("pointstart", function() {
-            checkClearCondition();
+            const ret = checkClearCondition();
+            if (ret) {
+                App.pushScene(ClearScene1());
+                self.one("resume", () => {
+                    newGame();
+                });
+            }
         });
 
-        let cells = [[0,0,0,0,0,0,0,0,0,0],
-                        [0,0,0,0,0,0,0,0,0,0],
-                        [0,1,1,1,1,1,1,1,0,0],
-                        [0,1,2,2,2,2,2,2,1,0],
-                        [0,1,2,2,2,2,2,1,0,0],
-                        [0,0,1,2,2,2,2,1,0,0],
-                        [0,0,1,2,2,2,2,1,0,0],
-                        [0,1,2,2,2,2,2,1,0,0],
-                        [0,1,2,2,2,2,1,1,1,0],
-                        [0,1,2,1,2,2,1,0,0,0],
-                        [0,0,1,2,2,2,1,0,0,0],
-                        [0,0,1,1,2,2,2,1,0,0],
-                        [0,1,1,1,1,1,1,1,0,0],
-                        [0,0,0,0,0,0,0,0,0,0],
-                        [0,0,0,0,0,0,0,0,0,0],
-        ];
-
+        let cells = [];
 
         function newGame() {
             let holdStonesCount = 0;
-
+            createProblem();
             drawField();
-
         }
-
 
         // cellsの値に応じて、フィールドにスプライトを配置する
         // 0: water 1: stone 2: grass
@@ -159,7 +210,7 @@ phina.define('GameScene', {
 
             // ホールドしている石の数が0でない場合はクリア失敗
             if (holdStonesCount !== 0) {
-                alert("クリア失敗０！ 石をすべて使い切ってください！");
+                App.pushScene(FailedScene1({text: "使ってないブロックが残ってるよ！\nブロックはぜんぶ使ってね！"}));
                 return false;
             }
 
@@ -284,13 +335,13 @@ phina.define('GameScene', {
 
             // グループが１つしかなく、それが長方形ではない場合はクリア失敗
             if (countGroups(groupingCells) === 1 && nonRectangularGroups.length > 0) {
-                alert("クリア失敗１！ 草地が長方形になっていません！");
+                App.pushScene(FailedScene1({text: "まだ長方形になっていないみたい。\n長方形を作ってみてね！"}));
                 return false;
             }
 
             // 長方形でないグループが複数ある場合はクリア失敗
             if (nonRectangularGroups.length > 1) {
-                alert("クリア失敗２！ 草地が長方形になっていません！");
+                App.pushScene(FailedScene1({text: "まだ長方形になっていないみたい。\n長方形を作ってみてね！"}));
                 return false;
             }
 
@@ -323,7 +374,7 @@ phina.define('GameScene', {
 
             // セルの数が10の倍数でないグループが複数ある場合はクリア失敗
             if (nonMultipleOfTenGroups.length > 1) {
-                alert("クリア失敗３！ 草地のセルの数が10の倍数になっていません！");
+                App.pushScene(FailedScene1({text: "長方形はできたかな？\n長方形の面積は１０の倍数にしてね！"}));
                 return false;
             }
 
@@ -332,7 +383,7 @@ phina.define('GameScene', {
                 const targetGroupId = nonMultipleOfTenGroups[0];
                 const cellCount = countCellsInGroup(groupingCells, targetGroupId);
                 if (cellCount >= 10) {
-                    alert("クリア失敗４！ 10の倍数になっていない領域が大きすぎます！");
+                App.pushScene(FailedScene1({text: "面積が１０の倍数ではない長方形は\nもっと小さく分割しよう！"}));
                     return false;
                 }
             }
@@ -350,9 +401,6 @@ phina.define('GameScene', {
                 }
                 return count;
             }
-
-            
-            alert("クリア成功！ おめでとうございます！");
             return true;
         }
 
@@ -364,24 +412,68 @@ phina.define('GameScene', {
                 [0,0,0,0,0,0,0,0,0,0],
                 [0,0,0,0,0,0,0,0,0,0],
                 [0,0,0,0,0,0,0,0,0,0],
-                [0,0,2,2,2,2,2,2,0,0],
-                [0,0,2,2,2,2,2,2,0,0],
-                [0,0,2,2,2,2,2,2,0,0],
-                [0,0,2,2,2,2,2,2,0,0],
-                [0,0,2,2,2,2,2,2,0,0],
-                [0,0,2,2,2,2,2,2,0,0],
-                [0,0,2,2,2,2,2,2,0,0],
-                [0,0,2,2,2,2,2,2,0,0],
-                [0,0,2,2,2,2,2,2,0,0],
+                [0,2,2,2,2,2,2,2,2,0],
+                [0,2,2,2,2,2,2,2,2,0],
+                [0,2,2,2,2,2,2,2,2,0],
+                [0,2,2,2,2,2,2,2,2,0],
+                [0,2,2,2,2,2,2,2,2,0],
+                [0,2,2,2,2,2,2,2,2,0],
+                [0,2,2,2,2,2,2,2,2,0],
+                [0,2,2,2,2,2,2,2,2,0],
+                [0,2,2,2,2,2,2,2,2,0],
                 [0,0,0,0,0,0,0,0,0,0],
                 [0,0,0,0,0,0,0,0,0,0],
                 [0,0,0,0,0,0,0,0,0,0],
             ];
 
             // 上辺にランダムに凸凹を作成
-            let topHeight = Math.floor(Math.random() * 3) + 2;
-            for (let i = 0; i < topHeight; i++) {
-                cells[i][Math.floor(Math.random() * 10)] = 1;
+            for (let x = 1; x < 9; x++) {
+                if (Math.random() < 0.5) {
+                    cells[2][x] = 2;
+                }
+            }
+
+            // 下辺にランダムに凸凹を作成
+            for (let x = 1; x < 9; x++) {
+                if (Math.random() < 0.5) {
+                    cells[12][x] = 2;
+                }
+            }
+
+            // 左辺にランダムに凸凹を作成
+            for (let y = 3; y < 12; y++) {
+                if (Math.random() < 0.5) {
+                    cells[y][0] = 2;
+                }
+            }
+
+            // 右辺にランダムに凸凹を作成
+            for (let y = 3; y < 12; y++) {
+                if (Math.random() < 0.5) {
+                    cells[y][9] = 2;
+                }
+            }
+
+            // 水に隣接している草地を石に変換
+            for (let y = 1; y < cells.length - 1; y++) {
+                for (let x = 0; x < cells[y].length; x++) {
+                    if (cells[y][x] === 2) {
+                        if (cells[y-1][x] === 0 || cells[y+1][x] === 0 || cells[y][x-1] === 0 || cells[y][x+1] === 0) {
+                            cells[y][x] = 1;
+                        }
+                    }
+                }
+            }
+
+            // 草地の20％を石に変換
+            for (let y = 0; y < cells.length; y++) {
+                for (let x = 0; x < cells[y].length; x++) {
+                    if (cells[y][x] === 2) {
+                        if (Math.random() < 0.2) {
+                            cells[y][x] = 1;
+                        }
+                    }
+                }
             }
 
         }
@@ -428,23 +520,96 @@ phina.define('BasicButton', {
     },
 });
 
+phina.define('FailedScene1', {
+    superClass: 'DisplayScene',
+    init: function(param) {
+        this.superInit(param);
+        const self = this;
+
+        RectangleShape({
+            width: this.width,
+            height: this.height,
+            fill: "rgba(0, 0, 0, 0.7)",
+            strokeWidth: 0,
+        }).addChildTo(this).setPosition(this.gridX.center(), this.gridY.center());
+
+        LabelArea({
+            width: this.width - 50,
+            text: param.text,
+            // text: "使ってないブロックが残ってるよ！\nブロックはぜんぶ使ってね！",
+            fontSize: 32,
+            fill: "white",
+            fontWeight: 800,
+            stroke: "black",
+            strokeWidth: 10,
+            align: "center",
+        }).addChildTo(this).setPosition(this.gridX.center(), this.gridY.center());
+
+        Sprite("panda").addChildTo(this).setPosition(this.gridX.center(), this.gridY.center());
+
+        this.on("pointstart", () => {
+            self.exit();
+        });
+
+    },
+});
+
+phina.define('ClearScene1', {
+    superClass: 'DisplayScene',
+    init: function(param) {
+        this.superInit(param);
+        const self = this;
+
+        RectangleShape({
+            width: this.width,
+            height: this.height,
+            fill: "rgba(255, 255, 255, 0.7)",
+            strokeWidth: 0,
+        }).addChildTo(this).setPosition(this.gridX.center(), this.gridY.center());
+
+        LabelArea({
+            width: this.width - 50,
+            text: "CLEAR!!",
+            fontSize: 120,
+            fill: "white",
+            fontWeight: 800,
+            stroke: "black",
+            strokeWidth: 30,
+            align: "center",
+        }).addChildTo(this).setPosition(this.gridX.center(), this.gridY.center(-1));
+
+        Sprite("panda").addChildTo(this).setPosition(this.gridX.center(), this.gridY.center());
+
+        this.on("pointstart", () => {
+            self.exit();
+        });
+
+    },
+});
+
 ASSETS = {
     image: {
         "water": "water.png",
         "grass": "grass.png",
         "stone": "stone.png",
+        "panda": "panda.png",
+        "howto": "howto.png",
     }
 };
 
 phina.main(function() {
     App = GameApp({
         assets: ASSETS,
-        startLabel: 'GameScene',
+        startLabel: 'TitleScene',
         scenes: [
-            // {
-            //     label: 'TitleScene',
-            //     className: 'TitleScene',
-            // },
+            {
+                label: 'TitleScene',
+                className: 'TitleScene',
+            },
+            {
+                label: 'HowToScene',
+                className: 'HowToScene',
+            },
             {
                 label: 'GameScene',
                 className: 'GameScene',
