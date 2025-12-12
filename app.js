@@ -12,7 +12,7 @@ phina.define('TitleScene', {
         this.backgroundColor = "PeachPuff";
 
         Label({
-            text: "せいとん\nパズル",
+            text: "せいち\nパズル",
             fontSize: 100,
             fill: "black",
             fontWeight: 800,
@@ -42,11 +42,11 @@ phina.define('HowToScene', {
         this.backgroundColor = "PeachPuff";
 
         Label({
-            text: "遊び方",
+            text: "ルール",
             fontSize: 50,
             fill: "black",
             fontWeight: 800,
-        }).addChildTo(this).setPosition(this.gridX.center(), this.gridY.center(-7));
+        }).addChildTo(this).setPosition(this.gridX.center(), this.gridY.center(-6.8));
 
         LabelArea({
             width: this.width - 100,
