@@ -471,7 +471,7 @@ phina.define('GameScene', {
             }
 
             // まれに左辺に切り込みを入れる
-            if (Math.random() < 0.1) {
+            if (Math.random() < 0.2) {
                 cells[8][0] = 0;
                 cells[8][1] = 0;
                 cells[8][2] = 0;
@@ -479,10 +479,25 @@ phina.define('GameScene', {
             }
 
             // まれに右辺に切り込みを入れる
-            if (Math.random() < 0.1) {
+            if (Math.random() < 0.2) {
                 cells[8][9] = 0;
                 cells[8][8] = 0;
                 cells[8][7] = 0;
+            }
+
+            // ごくまれに上辺に切り込みを入れる
+            if (Math.random() < 0.1) {
+                cells[2][5] = 0;
+                cells[3][5] = 0;
+                cells[4][5] = 0;
+                cells[5][5] = 0;
+            }
+
+            // ごくまれに下辺に切り込みを入れる
+            if (Math.random() < 0.1) {
+                cells[10][5] = 0;
+                cells[11][5] = 0;
+                cells[12][5] = 0;
             }
 
             // 水に隣接している草地を石に変換
