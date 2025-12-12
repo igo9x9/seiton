@@ -271,8 +271,8 @@ phina.define('GameScene', {
 
             const groupingCells = groupCells(cells);
 
-            console.log(groupingCells);
-
+            console.log(groupingCells);            
+            
             // グループごとに、それが長方形であるかどうかを調べて、
             // 長方形ではない場合はそのグループIDを出力する
             function findNonRectangularGroups(grid) {
@@ -417,6 +417,51 @@ phina.define('GameScene', {
                 }
                 return count;
             }
+
+            // グループごとに、グループの中心座標とセルの個数を返す
+            function getGroupInfo(grid) {
+                const groupInfo = new Map();
+                const rows = grid.length;
+                const cols = grid[0].length;
+                for (let i = 0; i < rows; i++) {
+                    for (let j = 0; j < cols; j++) {
+                        const groupId = grid[i][j];
+                        // グループIDが0は無視
+                        if (groupId === 0) continue;
+                        if (!groupInfo.has(groupId)) {
+                            groupInfo.set(groupId, { center: [0, 0], cellCount: 0 });
+                        }
+                        groupInfo.get(groupId).center[0] += i;
+                        groupInfo.get(groupId).center[1] += j;
+                        groupInfo.get(groupId).cellCount += 1;
+                    }
+                }
+                for (const [groupId, info] of groupInfo) {
+                    info.center[0] = Math.floor(info.center[0] / info.cellCount);
+                    info.center[1] = Math.floor(info.center[1] / info.cellCount);
+                }
+                return groupInfo;
+            }
+            const groupInfo = getGroupInfo(groupingCells);
+            console.log("groupInfo", groupInfo);
+
+            // 各グループの中心に、セルの個数をLabelで表示する
+            for (const [groupId, info] of groupInfo) {
+                const label = new Label({
+                    text: String(info.cellCount),
+                    x: fieldLayer.gridX.span(info.center[1]),
+                    y: fieldLayer.gridY.span(info.center[0]),
+                    fill: "white",
+                    fontSize: 120,
+                    fontWeight: "bold",
+                    stroke: "black",
+                    strokeWidth: 20,
+                });
+                label.addChildTo(fieldLayer);
+
+            }
+
+
             return true;
         }
 
@@ -471,7 +516,7 @@ phina.define('GameScene', {
             }
 
             // まれに左辺に切り込みを入れる
-            if (Math.random() < 0.2) {
+            if (Math.random() < 0.3) {
                 cells[8][0] = 0;
                 cells[8][1] = 0;
                 cells[8][2] = 0;
@@ -479,14 +524,14 @@ phina.define('GameScene', {
             }
 
             // まれに右辺に切り込みを入れる
-            if (Math.random() < 0.2) {
+            if (Math.random() < 0.3) {
                 cells[8][9] = 0;
                 cells[8][8] = 0;
                 cells[8][7] = 0;
             }
 
             // ごくまれに上辺に切り込みを入れる
-            if (Math.random() < 0.1) {
+            if (Math.random() < 0.2) {
                 cells[2][5] = 0;
                 cells[3][5] = 0;
                 cells[4][5] = 0;
@@ -494,7 +539,7 @@ phina.define('GameScene', {
             }
 
             // ごくまれに下辺に切り込みを入れる
-            if (Math.random() < 0.1) {
+            if (Math.random() < 0.2) {
                 cells[10][5] = 0;
                 cells[11][5] = 0;
                 cells[12][5] = 0;
