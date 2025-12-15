@@ -437,8 +437,8 @@ phina.define('GameScene', {
                     }
                 }
                 for (const [groupId, info] of groupInfo) {
-                    info.center[0] = Math.floor(info.center[0] / info.cellCount);
-                    info.center[1] = Math.floor(info.center[1] / info.cellCount);
+                    info.center[0] = info.center[0] / info.cellCount;
+                    info.center[1] = info.center[1] / info.cellCount;
                 }
                 return groupInfo;
             }
