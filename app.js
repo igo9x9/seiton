@@ -1,6 +1,6 @@
 phina.globalize();
 
-const version = "1.0";
+const version = "1.1";
 
 phina.define('TitleScene', {
     superClass: 'DisplayScene',
@@ -79,7 +79,7 @@ phina.define('GameScene', {
             height: 64 * 15,
             x: self.gridX.center(),
             y: self.gridY.center(),
-            fill: "gray",
+            fill: "black",
             strokeWidth: 0,
         }).addChildTo(this);
 
@@ -168,7 +168,7 @@ phina.define('GameScene', {
                         Sprite("water").addChildTo(fieldLayer).setPosition(fieldLayer.gridX.span(j), fieldLayer.gridY.span(i));
                     } 
                     if (cells[i][j] === 1) {
-                        putStone(j, i);
+                        putStone(j, i, {animation: true});
                     } 
                     if (cells[i][j] === 2) {
                         putGrass(j, i);
@@ -178,27 +178,43 @@ phina.define('GameScene', {
         }
 
         // 石を置く関数
-        function putStone(x, y) {
-            // const stone = Sprite("stone").addChildTo(fieldLayer).setPosition(fieldLayer.gridX.span(x), fieldLayer.gridY.span(y));
+        function putStone(x, y, options) {
+            let kemuri = null;
+            if (options && options.animation) {
+                kemuri = Sprite("kemuri").addChildTo(fieldLayer).setPosition(fieldLayer.gridX.span(x), fieldLayer.gridY.span(y)).setScale(0.1).hide();
+            }
             const stone = Sprite("stone").addChildTo(fieldLayer).setPosition(holdStonesBox.position.x - fieldLayer.position.x, holdStonesBox.position.y - fieldLayer.position.y);
             stone.tweener.to({x: fieldLayer.gridX.span(x), y: fieldLayer.gridY.span(y)}, 200)
             .call(() => {
                 cells[y][x] = 1;
+                if (options && options.animation) {
+                    stone.tweener.scaleTo(0.5, 10).scaleTo(1, 30).scaleTo(0.7, 10).scaleTo(1, 30).play();
+                    kemuri.show();
+                    kemuri.tweener.to({
+                        scaleX: 0.6, scaleY: 0.6,
+                        alpha: 0,
+                    }, 800, "easeOutCirc").call(() => {
+                        kemuri.remove();
+                    }).play();
+                }
+                if (options && options.callback) {
+                    options.callback();
+                }
             })
             .play();
             stone.setInteractive(true);
             stone.on("pointstart", () => {
+                putGrass(x, y);
                 stone.tweener.to({x: holdStonesBox.position.x - fieldLayer.position.x, y: holdStonesBox.position.y - fieldLayer.position.y}, 200).call(() => {
                     stone.remove();
                     holdStonesCount++;
                     holdStonesLabel.text = String(holdStonesCount);
-                    putGrass(x, y);
                 }).play();
             });
         }
 
         // 草を置く関数
-        function putGrass(x, y) {
+        function putGrass(x, y, options) {
             const grass = Sprite("grass").addChildTo(fieldLayer).setPosition(fieldLayer.gridX.span(x), fieldLayer.gridY.span(y));
             cells[y][x] = 2;
             grass.setInteractive(true);
@@ -211,13 +227,12 @@ phina.define('GameScene', {
                         .rotateTo(-5, 50)
                         .rotateTo(0, 50)
                         .play();
-
                     return;
                 }
-                grass.remove();
+                // grass.remove();
                 holdStonesCount--;
                 holdStonesLabel.text = String(holdStonesCount);
-                putStone(x, y);
+                putStone(x, y, {animation: true, callback: function() {grass.remove();}});
             });
         }
 
@@ -698,6 +713,7 @@ ASSETS = {
         "stone": "stone.png",
         "panda": "panda.png",
         "howto": "howto.png",
+        "kemuri": "kemuri.png",
     }
 };
 
