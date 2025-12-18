@@ -181,7 +181,7 @@ phina.define('GameScene', {
         function putStone(x, y, options) {
             let kemuri = null;
             if (options && options.animation) {
-                kemuri = Sprite("kemuri").addChildTo(fieldLayer).setPosition(fieldLayer.gridX.span(x), fieldLayer.gridY.span(y)).setScale(0.1).hide();
+                kemuri = Sprite("kemuri").addChildTo(fieldLayer).setPosition(fieldLayer.gridX.span(x), fieldLayer.gridY.span(y)).setScale(0.3).hide();
             }
             const stone = Sprite("stone").addChildTo(fieldLayer).setPosition(holdStonesBox.position.x - fieldLayer.position.x, holdStonesBox.position.y - fieldLayer.position.y);
             stone.tweener.to({x: fieldLayer.gridX.span(x), y: fieldLayer.gridY.span(y)}, 200)
@@ -191,9 +191,9 @@ phina.define('GameScene', {
                     stone.tweener.scaleTo(0.5, 10).scaleTo(1, 30).scaleTo(0.7, 10).scaleTo(1, 30).play();
                     kemuri.show();
                     kemuri.tweener.to({
-                        scaleX: 0.6, scaleY: 0.6,
+                        scaleX: 1, scaleY: 1,
                         alpha: 0,
-                    }, 800, "easeOutCirc").call(() => {
+                    }, 1500, "easeOutCirc").call(() => {
                         kemuri.remove();
                     }).play();
                 }
