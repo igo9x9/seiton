@@ -1,6 +1,6 @@
 phina.globalize();
 
-const version = "1.1";
+const version = "1.2";
 
 phina.define('TitleScene', {
     superClass: 'DisplayScene',
@@ -94,6 +94,26 @@ phina.define('GameScene', {
             offset: fieldLayer.height / 2 * -1 + 32,
         });
 
+        const effectLayer = RectangleShape({
+            width: 64 * 10,
+            height: 64 * 15,
+            x: self.gridX.center(),
+            y: self.gridY.center(),
+            fill: "transparent",
+            strokeWidth: 0,
+        }).addChildTo(this);
+
+        effectLayer.gridX = Grid({
+            width: effectLayer.width,
+            columns: 10,
+            offset: effectLayer.width / 2 * -1 + 32,
+        });
+        effectLayer.gridY = Grid({
+            width: effectLayer.height,
+            columns: 15,
+            offset: effectLayer.height / 2 * -1 + 32,
+        });
+
         const holdStonesBox = RectangleShape({
             width: 200,
             height: 80,
@@ -177,21 +197,84 @@ phina.define('GameScene', {
             }
         }
 
+        let actionType = null;
+
+        self.on("pointstart", (e) => {
+            actionType = null;
+            action(e.pointer.x, e.pointer.y);
+        });
+
+        self.on("pointmove", (e) => {
+            if (actionType === null) {
+                return;
+            }
+            action(e.pointer.x, e.pointer.y);
+        });
+
+        function action(x, y) {
+            // マウス座標をフィールドのセル座標に変換
+            const cellX = Math.floor((x) / 64);
+            const cellY = Math.floor((y) / 64);
+
+            // fieldLayer.children.each((child) => {
+            for (const child of fieldLayer.children) {
+                if (child.hitTest(x, y)) {
+                    if (cells[cellY][cellX] === 1) {
+                        if (actionType === null) {
+                            actionType = "putGrass";
+                        } else if (actionType === "putStone") {
+                            break;
+                        }
+                        child.tweener.to({x: holdStonesBox.position.x - fieldLayer.position.x, y: holdStonesBox.position.y - fieldLayer.position.y}, 200).call(() => {
+                            child.remove();
+                            holdStonesCount++;
+                            holdStonesLabel.text = String(holdStonesCount);
+                            putGrass(cellX, cellY);
+                        }).play();
+                    } else if (cells[cellY][cellX] === 2) {
+                        if (actionType === null) {
+                            actionType = "putStone";
+                        } else if (actionType === "putGrass") {
+                            break;
+                        }
+
+                        if (holdStonesCount === 0) {
+                            if (holdStonesBox.tweener.playing) {
+                                return;
+                            }
+                            holdStonesBox.tweener
+                                .rotateTo(10, 50)
+                                .rotateTo(-10, 50)
+                                .rotateTo(5, 50)
+                                .rotateTo(-5, 50)
+                                .rotateTo(0, 50)
+                                .play();
+                            break;
+                        }
+                        holdStonesCount--;
+                        holdStonesLabel.text = String(holdStonesCount);
+                        putStone(cellX, cellY, {animation: true, callback: function() {child.remove();}});
+                    }
+                    break;
+                }
+            };
+        }
+
         // 石を置く関数
         function putStone(x, y, options) {
             let kemuri = null;
+            cells[y][x] = 1;
             if (options && options.animation) {
-                kemuri = Sprite("kemuri").addChildTo(fieldLayer).setPosition(fieldLayer.gridX.span(x), fieldLayer.gridY.span(y)).setScale(0.3).hide();
+                kemuri = Sprite("kemuri").addChildTo(effectLayer).setPosition(effectLayer.gridX.span(x), effectLayer.gridY.span(y)).setScale(0.3).hide();
             }
             const stone = Sprite("stone").addChildTo(fieldLayer).setPosition(holdStonesBox.position.x - fieldLayer.position.x, holdStonesBox.position.y - fieldLayer.position.y);
             stone.tweener.to({x: fieldLayer.gridX.span(x), y: fieldLayer.gridY.span(y)}, 200)
             .call(() => {
-                cells[y][x] = 1;
                 if (options && options.animation) {
                     stone.tweener.scaleTo(0.5, 10).scaleTo(1, 30).scaleTo(0.7, 10).scaleTo(1, 30).play();
                     kemuri.show();
                     kemuri.tweener.to({
-                        scaleX: 1, scaleY: 1,
+                        scaleX: 1.5, scaleY: 1.5,
                         alpha: 0,
                     }, 1500, "easeOutCirc").call(() => {
                         kemuri.remove();
@@ -202,38 +285,38 @@ phina.define('GameScene', {
                 }
             })
             .play();
-            stone.setInteractive(true);
-            stone.on("pointstart", () => {
-                putGrass(x, y);
-                stone.tweener.to({x: holdStonesBox.position.x - fieldLayer.position.x, y: holdStonesBox.position.y - fieldLayer.position.y}, 200).call(() => {
-                    stone.remove();
-                    holdStonesCount++;
-                    holdStonesLabel.text = String(holdStonesCount);
-                }).play();
-            });
+            // stone.setInteractive(true);
+            // stone.on("pointstart", () => {
+            //     putGrass(x, y);
+            //     stone.tweener.to({x: holdStonesBox.position.x - fieldLayer.position.x, y: holdStonesBox.position.y - fieldLayer.position.y}, 200).call(() => {
+            //         stone.remove();
+            //         holdStonesCount++;
+            //         holdStonesLabel.text = String(holdStonesCount);
+            //     }).play();
+            // });
         }
 
         // 草を置く関数
         function putGrass(x, y, options) {
             const grass = Sprite("grass").addChildTo(fieldLayer).setPosition(fieldLayer.gridX.span(x), fieldLayer.gridY.span(y));
             cells[y][x] = 2;
-            grass.setInteractive(true);
-            grass.on("pointstart", () => {
-                if (holdStonesCount === 0) {
-                    holdStonesBox.tweener
-                        .rotateTo(10, 50)
-                        .rotateTo(-10, 50)
-                        .rotateTo(5, 50)
-                        .rotateTo(-5, 50)
-                        .rotateTo(0, 50)
-                        .play();
-                    return;
-                }
-                // grass.remove();
-                holdStonesCount--;
-                holdStonesLabel.text = String(holdStonesCount);
-                putStone(x, y, {animation: true, callback: function() {grass.remove();}});
-            });
+            // grass.setInteractive(true);
+            // grass.on("pointstart", () => {
+            //     if (holdStonesCount === 0) {
+            //         holdStonesBox.tweener
+            //             .rotateTo(10, 50)
+            //             .rotateTo(-10, 50)
+            //             .rotateTo(5, 50)
+            //             .rotateTo(-5, 50)
+            //             .rotateTo(0, 50)
+            //             .play();
+            //         return;
+            //     }
+            //     // grass.remove();
+            //     holdStonesCount--;
+            //     holdStonesLabel.text = String(holdStonesCount);
+            //     putStone(x, y, {animation: true, callback: function() {grass.remove();}});
+            // });
         }
 
         // クリア条件を満たしているか
