@@ -1,6 +1,7 @@
 phina.globalize();
 
 const version = "1.2";
+const message = "操作性がよくなりました！\nドラッグして石を移動できます。"
 
 phina.define('TitleScene', {
     superClass: 'DisplayScene',
@@ -25,6 +26,12 @@ phina.define('TitleScene', {
         }).addChildTo(this).setPosition(this.gridX.center(), this.gridY.center());
 
         Sprite("panda").addChildTo(this).setPosition(this.gridX.center(), this.gridY.center(2));
+
+        Label({
+            text: message,
+            fontSize: 25,
+            fill: "black",
+        }).addChildTo(this).setPosition(this.gridX.center(), this.gridY.center(5));
 
         this.on("pointstart", () => {
             self.exit("HowToScene");
@@ -274,9 +281,9 @@ phina.define('GameScene', {
                     stone.tweener.scaleTo(0.5, 10).scaleTo(1, 30).scaleTo(0.7, 10).scaleTo(1, 30).play();
                     kemuri.show();
                     kemuri.tweener.to({
-                        scaleX: 1.5, scaleY: 1.5,
+                        scaleX: 0.6, scaleY: 0.6,
                         alpha: 0,
-                    }, 1500, "easeOutCirc").call(() => {
+                    }, 2000, "easeOutCirc").call(() => {
                         kemuri.remove();
                     }).play();
                 }
