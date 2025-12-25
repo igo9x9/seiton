@@ -1,6 +1,6 @@
 phina.globalize();
 
-const version = "1.2";
+const version = "1.3";
 const message = "操作性がよくなりました！\nドラッグして石を移動できます。"
 
 phina.define('TitleScene', {
@@ -278,7 +278,14 @@ phina.define('GameScene', {
             stone.tweener.to({x: fieldLayer.gridX.span(x), y: fieldLayer.gridY.span(y)}, 200)
             .call(() => {
                 if (options && options.animation) {
-                    stone.tweener.scaleTo(0.5, 10).scaleTo(1, 30).scaleTo(0.7, 10).scaleTo(1, 30).play();
+                    stone.tweener
+                        .rotateTo(20, 80)
+                        .rotateTo(-20, 80)
+                        .rotateTo(10, 50)
+                        .rotateTo(-10, 50)
+                        .rotateTo(0, 30)
+                        .play();
+                    // stone.tweener.scaleTo(0.5, 10).scaleTo(1, 30).scaleTo(0.7, 10).scaleTo(1, 30).play();
                     kemuri.show();
                     kemuri.tweener.to({
                         scaleX: 0.6, scaleY: 0.6,
